@@ -1,7 +1,7 @@
 // Module for
 module ProgramCounter (
     input [7:0] addi,
-	 input we,
+	input we,
     output reg [7:0] addo 
 );
 
@@ -10,6 +10,5 @@ always@(*) begin
 		addo <= addi;
 	end
 end
-
 
 endmodule

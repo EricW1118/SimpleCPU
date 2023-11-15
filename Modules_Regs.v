@@ -1,10 +1,10 @@
 // Code your design here
 // ---------------------------------Main Register------------------------------------------
 module MainRegister (
-    input re,
+    input we,
     input [1:0] rd1,
     input [1:0] rd2,
-    input [0:1] wd,
+    input [1:0] wd,
     input [7:0] din,
     output [7:0] dout1,
     output [7:0] dout2
@@ -13,7 +13,7 @@ module MainRegister (
 reg [7:0] regis [0:3]; // Array of 4 registers, each 8 bits wide
 
 always @ (*) begin
-    if (re) begin
+    if (we) begin
         regis[wd] <= din;
     end
 end
@@ -22,64 +22,12 @@ assign dout2 = regis[rd2];
 endmodule
 
 
-// ---------------------------------Stage Register-----------------------------------------
-module StageRegister (
-    input [3:0] opi,  //operation code
-    input [1:0] rai, 
-    input [1:0] rbi,
-    input [7:0] din1,
-    input [7:0] din2,
-    input [7:0] immedi,
-    input [1:0] ZNi,
-    input clk, // write enable bite
-    
-    // output when negedge comes
-    output reg [3:0] opo,  
-    output reg [1:0] rao, 
-    output reg [1:0] rbo,
-    output reg [7:0] dout1,
-    output reg [7:0] dout2,
-    output reg [7:0] immedo,
-    output reg [1:0] ZNo
-);
-
-// For data holding inside of the stage register
-  reg [3:0] opt;
-  reg [1:0] rat;
-  reg [1:0] rbt;
-  reg [7:0] dt1;
-  reg [7:0] dt2;
-  reg [7:0] immedt;
-  reg [1:0] ZNt;
-
-always @(posedge clk) begin
-    opt <= opi;
-    rat <= rai;
-    rbt <= rbi;
-    dt1 <= din1;
-    dt2 <= din2;
-    immedt <= immedi;
-    ZNt <= ZNi;
-end
-
-always @(negedge clk) begin
-    opo <= opt;
-    rao <= rat;
-    rbo <= rbt;
-    dout1 <= dt1;
-    dout2 <= dt2;
-    immedo <= immedt;
-    ZNo <= ZNt;
-end
-
-endmodule
-
-
-module RF_IF_ID (
+// ---------------------------------IF/ID------------------------------------------
+module RfIfId (
     input [15:0] insi,
-    output reg [15:0] inso,
     input clk,
-    input we
+    input we,
+    output reg [15:0] inso
 );
 
 reg[15:0] inner_reg;
@@ -95,5 +43,97 @@ always @(negedge clk) begin
         inso <= inner_reg;
     end
 end
+endmodule
 
+
+// ---------------------------------ID/EXE-----------------------------------------
+module RfIdExe (
+    input [15:0] insi,//original instruction
+    input [15:0] din,
+    input clk, // write enable bite
+    
+    // output when negedge comes
+    output reg [15:0] inso,  
+    output reg [15:0] dout
+);
+
+// For data holding inside of the stage register
+  reg [15:0] inst;
+  reg [15:0] dt;
+
+always @(posedge clk) begin
+    inst <= insi;
+    dt <= din;
+end
+
+always @(negedge clk) begin
+    inso <= inst;
+    dout <= dt;
+end
+endmodule
+
+// ---------------------------------EXE/DM-----------------------------------------
+module RfExeDm (
+    input [15:0] insi,//original instruction
+    input [15:0] din,
+    input [7:0] alui,
+    input clk, // write enable bite
+
+    // output when negedge comes
+    output reg [15:0] inso,  
+    output reg [15:0] dout,
+    output reg [7:0] aluo
+);
+
+  reg [15:0] inst;
+  reg [15:0] dt;
+  reg [7:0] alut;
+
+always @(posedge clk) begin
+    inst <= insi;
+    dt <= din;
+    alut <= alui;
+end
+
+always @(negedge clk) begin
+    inso <= inst;
+    dout <= dt;
+    aluo <= alut;
+end
+    
+endmodule
+
+
+module RfDmWb (
+    input [15:0] insi,//original instruction
+    input [15:0] din,
+    input [7:0] alui,
+    input [7:0] memi,
+    input clk, // write enable bite
+
+    output reg [15:0] inso,//original instruction
+    output reg [15:0] dout,
+    output reg [7:0] aluo,
+    output reg [7:0] memo
+);
+
+ reg [15:0] inst;
+ reg [15:0] dt;
+ reg [7:0] alut;
+ reg [7:0] memt;
+
+always @(posedge clk) begin
+    inst <= insi;
+    dt <= din;
+    alut <= alui;
+    memt <= memi;
+end
+
+always @(negedge clk) begin
+    inso <= inst;//original instruction
+    dout <= dt;
+    aluo <= alut;
+    memo <= memt;
+end
+    
 endmodule

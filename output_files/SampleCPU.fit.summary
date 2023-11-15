@@ -1,4 +1,4 @@
-Fitter Status : Successful - Sun Nov 12 20:56:36 2023
+Fitter Status : Successful - Tue Nov 14 23:33:58 2023
 Quartus Prime Version : 22.1std.2 Build 922 07/20/2023 SC Lite Edition
 Revision Name : SampleCPU
 Top-level Entity Name : SCPU
@@ -9,7 +9,7 @@ Total logic elements : 1 / 8,064 ( < 1 % )
     Total combinational functions : 1 / 8,064 ( < 1 % )
     Dedicated logic registers : 0 / 8,064 ( 0 % )
 Total registers : 0
-Total pins : 18 / 250 ( 7 % )
+Total pins : 17 / 250 ( 7 % )
 Total virtual pins : 0
 Total memory bits : 0 / 387,072 ( 0 % )
 Embedded Multiplier 9-bit elements : 0 / 48 ( 0 % )
