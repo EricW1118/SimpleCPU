@@ -1,5 +1,5 @@
 Analysis & Synthesis report for SampleCPU
-Tue Nov 14 23:33:46 2023
+Wed Nov 15 13:08:06 2023
 Quartus Prime Version 22.1std.2 Build 922 07/20/2023 SC Lite Edition
 
 
@@ -51,7 +51,7 @@ https://fpgasoftware.intel.com/eula.
 +-------------------------------------------------------------------------------------+
 ; Analysis & Synthesis Summary                                                        ;
 +------------------------------------+------------------------------------------------+
-; Analysis & Synthesis Status        ; Successful - Tue Nov 14 23:33:46 2023          ;
+; Analysis & Synthesis Status        ; Successful - Wed Nov 15 13:08:06 2023          ;
 ; Quartus Prime Version              ; 22.1std.2 Build 922 07/20/2023 SC Lite Edition ;
 ; Revision Name                      ; SampleCPU                                      ;
 ; Top-level Entity Name              ; SCPU                                           ;
@@ -75,7 +75,7 @@ https://fpgasoftware.intel.com/eula.
 +------------------------------------------------------------------+--------------------+--------------------+
 ; Option                                                           ; Setting            ; Default Value      ;
 +------------------------------------------------------------------+--------------------+--------------------+
-; Device                                                           ; 10M08DAF484C8G     ;                    ;
+; Device                                                           ; 10M50DAF484C6GES   ;                    ;
 ; Top-level entity name                                            ; SCPU               ; SampleCPU          ;
 ; Family name                                                      ; MAX 10             ; Cyclone V          ;
 ; Use smart compilation                                            ; Off                ; Off                ;
@@ -391,7 +391,7 @@ Note: For table entries with two numbers listed, the numbers in parentheses indi
 Info: *******************************************************************
 Info: Running Quartus Prime Analysis & Synthesis
     Info: Version 22.1std.2 Build 922 07/20/2023 SC Lite Edition
-    Info: Processing started: Tue Nov 14 23:33:14 2023
+    Info: Processing started: Wed Nov 15 13:07:47 2023
 Info: Command: quartus_map --read_settings_files=on --write_settings_files=off SampleCPU -c SampleCPU
 Warning (18236): Number of processors has not been specified which may cause overloading on shared machines.  Set the global assignment NUM_PARALLEL_PROCESSORS in your QSF to an appropriate value for best performance.
 Info (20030): Parallel compilation is enabled and will use 2 of the 2 processors detected
@@ -473,10 +473,10 @@ Info (21057): Implemented 17 device resources after synthesis - the final resour
     Info (21058): Implemented 9 input pins
     Info (21059): Implemented 8 output pins
 Info: Quartus Prime Analysis & Synthesis was successful. 0 errors, 35 warnings
-    Info: Peak virtual memory: 4768 megabytes
-    Info: Processing ended: Tue Nov 14 23:33:46 2023
-    Info: Elapsed time: 00:00:32
-    Info: Total CPU time (on all processors): 00:00:28
+    Info: Peak virtual memory: 4764 megabytes
+    Info: Processing ended: Wed Nov 15 13:08:06 2023
+    Info: Elapsed time: 00:00:19
+    Info: Total CPU time (on all processors): 00:00:21
 
 
 +------------------------------------------+

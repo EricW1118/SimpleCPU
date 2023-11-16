@@ -8,14 +8,14 @@ ins_index[5] => ins_index[5].IN1
 ins_index[6] => ins_index[6].IN1
 ins_index[7] => ins_index[7].IN1
 clk => clk.IN4
-res[0] <= RfDmWb:dwb.aluo
-res[1] <= RfDmWb:dwb.aluo
-res[2] <= RfDmWb:dwb.aluo
-res[3] <= RfDmWb:dwb.aluo
-res[4] <= RfDmWb:dwb.aluo
-res[5] <= RfDmWb:dwb.aluo
-res[6] <= RfDmWb:dwb.aluo
-res[7] <= RfDmWb:dwb.aluo
+res[0] << RfDmWb:dwb.aluo
+res[1] << RfDmWb:dwb.aluo
+res[2] << RfDmWb:dwb.aluo
+res[3] << RfDmWb:dwb.aluo
+res[4] << RfDmWb:dwb.aluo
+res[5] << RfDmWb:dwb.aluo
+res[6] << RfDmWb:dwb.aluo
+res[7] << RfDmWb:dwb.aluo
 
 
 |SCPU|InstructionMemory:ins_mem
