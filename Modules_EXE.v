@@ -1,12 +1,12 @@
 // -----------------------------------ALU------------------------------------------
 module ALU (
+    input [7:0] ex_in,
     input signed [7:0] s1, // first oprand
     input signed [7:0] s2,// second oprand
     input [3:0] mode, // depends on the opration code
-    output reg signed [7:0] result // the calculation output
+    output reg signed [7:0] result, // the calculation output
+    output reg [1:0] ZN
 );
-
-reg [1:0] ZN;
 
 always @(mode, s1, s2) begin
     case (mode)
