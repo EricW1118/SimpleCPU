@@ -60,7 +60,7 @@ assign pc_en = 1'b1;
 endmodule
 
 
-module ExternalOutCntrl (
+module ExtOutCntrl (
     input [7:0] ra, 
     input [3:0] op,
     output reg[7:0] out
@@ -73,6 +73,30 @@ always @(ra) begin
 end
 
 endmodule
+
+module WBCntrl (
+  input [7:0] alu,
+  input [7:0] mem,
+  input [7:4] op,
+  output [7:0] wbdata,
+  output rfwe
+);
+
+assign rfwe = ((op ==  4'h1) || // ADD
+               (op ==  4'h2) || // SUB
+               (op ==  4'h3) || // NAND
+               (op ==  4'h4) || // SHL
+               (op ==  4'h5) || // SHR
+               (op ==  4'h7) || // IN
+               (op ==  4'h8) || // MOV
+               (op ==  4'hd) || // LOAD
+               (op ==  4'hf) ) ? 1'b1 : 1'b0; // LOADIMM
+// LOAD
+assign wbdata = (op == 4'hd) ? mem : alu;
+  
+endmodule
+
+
 
 module AluInputCntrl (
   input [15:0] cur_ins,

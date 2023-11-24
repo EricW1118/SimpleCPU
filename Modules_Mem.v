@@ -88,13 +88,17 @@ endmodule
 module DataMemory(
     input [7:0] addr, // Address input (8 bits)
     input we, // Write enable signal
+    input rst,
     input [7:0] din, // Data input (8 bits)
     output [7:0] dout // Data output (8 bits)
+    
 );
 reg [7:0] memory[0:255]; // Array of 256 memory locations, each 8 bits wide
 
-always @ (din or we) begin
-	 memory[addr] <= we ? din : memory[addr];
+always @ (posedge we) begin
+    if (we) begin
+        memory[addr] <= din;
+    end
 end
 
 assign dout = memory[addr];

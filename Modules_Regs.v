@@ -84,13 +84,6 @@ module ID_EXE (
 // For data holding inside of the stage register
 reg [15:0] inst, dt;
 
-always @(posedge rst) begin
-    if (rst) begin
-        inst <= 16'h0000;
-        dt <= 16'h0000;
-    end
-end
-
 always @(posedge clk) begin
     inst <= insi;
     dt <= din;
@@ -108,7 +101,7 @@ module EXE_DM (
     input [15:0] din,
     input [7:0] alui,
     input clk, // write enable bite
-
+    input rst,
     // output when negedge comes
     output reg [15:0] inso,  
     output reg [15:0] dout,
@@ -119,17 +112,17 @@ module EXE_DM (
     reg [15:0] dt;
     reg [7:0] alut;
 
-always @(posedge clk) begin
-    inst <= insi;
-    dt <= din;
-    alut <= alui;
-end
+    always @(posedge clk) begin
+        inst <= insi;
+        dt <= din;
+        alut <= alui;
+    end
 
-always @(negedge clk) begin
-    inso <= inst;
-    dout <= dt;
-    aluo <= alut;
-end
+    always @(negedge clk) begin
+        inso <= inst;
+        dout <= dt;
+        aluo <= alut;
+    end
     
 endmodule
 
@@ -140,6 +133,7 @@ module DM_WB (
     input [7:0] alui,
     input [7:0] memi,
     input clk, // write enable bite
+    input rst,
 
     output reg [15:0] inso,//original instruction
     output reg [15:0] dout,
@@ -147,23 +141,23 @@ module DM_WB (
     output reg [7:0] memo
 );
 
- reg [15:0] inst;
- reg [15:0] dt;
- reg [7:0] alut;
- reg [7:0] memt;
+    reg [15:0] inst;
+    reg [15:0] dt;
+    reg [7:0] alut;
+    reg [7:0] memt;
 
-always @(posedge clk) begin
-    inst <= insi;
-    dt <= din;
-    alut <= alui;
-    memt <= memi;
-end
+    always @(posedge clk) begin
+        inst <= insi;
+        dt <= din;
+        alut <= alui;
+        memt <= memi;
+    end
 
-always @(negedge clk) begin
-    inso <= inst;//original instruction
-    dout <= dt;
-    aluo <= alut;
-    memo <= memt;
-end
+    always @(negedge clk) begin
+        inso <= inst;//original instruction
+        dout <= dt;
+        aluo <= alut;
+        memo <= memt;
+    end
     
 endmodule
