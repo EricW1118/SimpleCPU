@@ -63,7 +63,7 @@ always @(posedge rst) begin
         memory[50] <= 8'b00000000;	//noop
         memory[51] <= 8'b00000000;
         memory[52] <= 8'b11010000;	//load		r0,counter  count_decrement_subroutine:
-        memory[52] <= 8'b00011111;
+        memory[53] <= 8'b00011111;
         memory[54] <= 8'b10001001;	//mov		r2,r1		
         memory[55] <= 8'b00000000;
         memory[56] <= 8'b11110100;	//loadimm		r1,1
@@ -76,7 +76,6 @@ always @(posedge rst) begin
         memory[63] <= 8'b00000000;
         memory[64] <= 8'b11000000;   // return
         memory[65] <= 8'b00000000;
-		  
     end
 end
 

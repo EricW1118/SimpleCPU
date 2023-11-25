@@ -49,15 +49,15 @@ module SCPU (
     ID_EXE sreg1(.insi(w_ins1), .din(vfr0), .clk(clk), .rst(rst), .inso(w_ins2),  .dout(vfr1));
 
     wire [7:0] aluo0, aluo1, aluo2;
-    ALU alu(.ex_in(ext_in), .s1(vfr1[15:8]),  .s2(vfr1[7:0]), .mode(w_ins2[7:4]), .result(aluo0), .ZN(zn_wire));
-    EXE_DM sreg2( .insi(w_ins2), .din(vfr1), .alui(aluo0), .clk(clk), .rst(rst), .inso(w_ins3), .dout(vfr3), .aluo(aluo1));
+    ALU alu(.ex_in(ext_in), .imm(w_ins2[15:8]), .s1(vfr1[15:8]),  .s2(vfr1[7:0]), .mode(w_ins2[7:4]), .result(aluo0), .ZN(zn_wire));
+    EXE_DM sreg2( .insi(w_ins2), .din(vfr1), .alui(aluo0), .clk(clk), .rst(rst), .inso(w_ins3), .dout(vfr2), .aluo(aluo1));
 
     wire [7:0] memo0, memo1;
     wire dm_en;
     DataMemory dm(.addr(w_ins3[15:8]), .we(dm_en), .din(aluo1), .rst(rst), .dout(memo0));
 
     // DM/WB register
-    DM_WB sreg3(.insi(w_ins3), .din(vfr3), .alui(aluo1), .memi(memo0), .clk(clk), .inso(w_ins4), .aluo(aluo2), .memo(memo1));
+    DM_WB sreg3(.insi(w_ins3), .din(vfr2), .alui(aluo1), .memi(memo0), .clk(clk), .inso(w_ins4), .aluo(aluo2), .memo(memo1));
     ExtOutCntrl extrl(.ra(aluo2), .op(w_ins4[7:4]), .out(ext_out));
 
     WBCntrl wbcntr(.alu(aluo2), .mem(memo1), .op(w_ins4[7:4]), .wbdata(main_rf_data_in), .rfwe(main_rf_we));

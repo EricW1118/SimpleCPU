@@ -13,13 +13,23 @@ module MainRegister (
 
 reg [7:0] regis [0:3]; // Array of 4 registers, each 8 bits wide
 
-always @ (posedge rst or posedge we) begin
+initial begin
+    regis[0] <= 8'h00;
+    regis[1] <= 8'h01;
+    regis[2] <= 8'h02;
+    regis[3] <= 8'h03;
+end
+
+always @(posedge rst ) begin
     if (rst) begin
         regis[0] <= 8'h00;
-		  regis[1] <= 8'h00;
-		  regis[2] <= 8'h00;
-		  regis[3] <= 8'h00;
+        regis[1] <= 8'h00;
+        regis[2] <= 8'h00;
+        regis[3] <= 8'h00;
     end
+end
+
+always @ ( posedge we) begin
     else if (we) begin
         regis[wd] <= din;
     end
@@ -27,10 +37,9 @@ end
 
 assign dout1 = regis[rd1];
 assign dout2 = regis[rd2];
-
 endmodule
 
-
+//  LR register for CALL, RETURN
 module LR (
     input [7:0] in,
     input we,
@@ -38,16 +47,18 @@ module LR (
     output reg[7:0] out
 );
 
-always @(posedge we or posedge rst) begin
+always @(posedge rst) begin
     if (rst) begin
         out <= 8'h00;
     end
-    else if (we) begin
+end
+
+always @(posedge we) begin
+    if (we) begin
         out <= in;
     end
 end
 endmodule
-
 
 // ---------------------------------IF/ID------------------------------------------
 module IF_ID (

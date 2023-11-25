@@ -9,11 +9,11 @@ module scpu_tb();
   SCPU mycpu(.ext_in(in), .clk(clk), .rst(rst), .ext_out(out));
 
   initial begin
-    clk = 1'b0;
+    clk = 1'b1;
     in <= 8'h0f;
     rst <= 1'b1;
-    #5 rst <= 1'b0;
-    #20 $stop;
+    #1 rst <= 1'b0;
+    #60 $stop;
   end
 
   always begin
