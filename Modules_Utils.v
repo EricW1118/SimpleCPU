@@ -104,17 +104,17 @@ module BubbleCntrl (
    output reg pc_en
 );
 
-always @(negedge clk) begin
-  $display("bubble check: %b, %b", ins_ahead, ins_follow);
-  if (ins_ahead[7:4] == 4'hd && 
-        (ins_follow[7:4] == 4'h1 || 
-         ins_follow[7:4] == 4'h2 || 
-         ins_follow[7:4] == 4'h3 || 
-         ins_follow[7:4] == 4'h4 || 
-         ins_follow[7:4] == 4'h5 ) && 
-        (ins_ahead[3:2] == ins_follow[3:2]) ||  
-        (ins_ahead[3:2] == ins_follow[1:0])) begin
-            pc_en <= 1'b0; // Bubble detected, Stall PC
+always @(negedge clk) begin 
+  if (ins_ahead[7:4] === 4'hd  && 
+      (ins_follow[7:4] == 4'h1 || 
+       ins_follow[7:4] == 4'h2 || 
+       ins_follow[7:4] == 4'h3 || 
+       ins_follow[7:4] == 4'h4 || 
+       ins_follow[7:4] == 4'h5 )  && 
+      ((ins_ahead[3:2] == ins_follow[3:2]) ||  
+       (ins_ahead[3:2] == ins_follow[1:0]))) begin
+          pc_en <= 1'b0; // Bubble detected, PC stall
+          $display("bubble check ------");
         end
   else begin
     pc_en <= 1'b1;
