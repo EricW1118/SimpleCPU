@@ -10,26 +10,15 @@ module MainRegister (
     output [7:0] dout1,
     output [7:0] dout2
 );
-
 reg [7:0] regis [0:3]; // Array of 4 registers, each 8 bits wide
 
-initial begin
-    regis[0] <= 8'h00;
-    regis[1] <= 8'h01;
-    regis[2] <= 8'h02;
-    regis[3] <= 8'h03;
-end
-
-always @(posedge rst ) begin
+always @ ( posedge we or posedge rst ) begin
     if (rst) begin
         regis[0] <= 8'h00;
-        regis[1] <= 8'h00;
-        regis[2] <= 8'h00;
-        regis[3] <= 8'h00;
-    end
-end
-
-always @ ( posedge we) begin
+        regis[1] <= 8'h01;
+        regis[2] <= 8'h02;
+        regis[3] <= 8'h03;
+    end 
     else if (we) begin
         regis[wd] <= din;
     end
@@ -37,9 +26,10 @@ end
 
 assign dout1 = regis[rd1];
 assign dout2 = regis[rd2];
+
 endmodule
 
-//  LR register for CALL, RETURN
+//  LR register for CALL and RETURN
 module LR (
     input [7:0] in,
     input we,
@@ -47,14 +37,11 @@ module LR (
     output reg[7:0] out
 );
 
-always @(posedge rst) begin
+always @(posedge we or posedge rst ) begin
     if (rst) begin
         out <= 8'h00;
     end
-end
-
-always @(posedge we) begin
-    if (we) begin
+    else if (we) begin
         out <= in;
     end
 end
@@ -65,20 +52,23 @@ module IF_ID (
     input [15:0] insi,
     input clk,
     input rst,
+    input bubble_en,
     output reg [15:0] inso
 );
-
-reg[15:0] inner_reg;
-
-always @(posedge clk) begin
-    inner_reg <= insi;
+always @(posedge clk or posedge rst) begin
+    if (rst) begin
+        inso <= 16'h0; // reset value
+    end
+    else if (bubble_en)begin
+        inso <= 16'h0; // insert bubble
+        $display("Bubble insert between %b and %b", insi, inso);
+    end
+    else begin
+        inso <= insi;  // regular
+    end
 end
-
-always @(negedge clk) begin
-    inso <= inner_reg;
-end
-
 endmodule
+
 
 // ---------------------------------ID/EXE-----------------------------------------
 module ID_EXE (
@@ -86,23 +76,20 @@ module ID_EXE (
     input [15:0] din,
     input clk, 
     input rst,
-    
     // output when negedge comes
     output reg [15:0] inso,  
     output reg [15:0] dout
 );
 
-// For data holding inside of the stage register
-reg [15:0] inst, dt;
-
-always @(posedge clk) begin
-    inst <= insi;
-    dt <= din;
-end
-
-always @(negedge clk) begin
-    inso <= inst;
-    dout <= dt;
+always @(posedge clk or posedge rst) begin
+    if (rst) begin
+        inso <= 16'h0;
+        dout <= 16'h0;
+    end
+    else begin
+        inso <= insi;
+        dout <= din;
+    end
 end
 endmodule
 
@@ -118,26 +105,23 @@ module EXE_DM (
     output reg [15:0] dout,
     output reg [7:0] aluo
 );
-
-    reg [15:0] inst;
-    reg [15:0] dt;
-    reg [7:0] alut;
-
-    always @(posedge clk) begin
-        inst <= insi;
-        dt <= din;
-        alut <= alui;
+always @(posedge clk or posedge rst) begin
+    if (rst) begin
+        inso <= 16'h0;
+        dout <= 16'h0;
+        aluo <= 8'h0;
+    end 
+    else begin
+        inso <= insi;
+        dout <= din;
+        aluo <= alui;
     end
-
-    always @(negedge clk) begin
-        inso <= inst;
-        dout <= dt;
-        aluo <= alut;
-    end
-    
+end
 endmodule
 
 
+
+// ----------------------------------DM/WB-----------------------------------------
 module DM_WB (
     input [15:0] insi,//original instruction
     input [15:0] din,
@@ -145,30 +129,23 @@ module DM_WB (
     input [7:0] memi,
     input clk, // write enable bite
     input rst,
-
     output reg [15:0] inso,//original instruction
     output reg [15:0] dout,
     output reg [7:0] aluo,
     output reg [7:0] memo
 );
-
-    reg [15:0] inst;
-    reg [15:0] dt;
-    reg [7:0] alut;
-    reg [7:0] memt;
-
-    always @(posedge clk) begin
-        inst <= insi;
-        dt <= din;
-        alut <= alui;
-        memt <= memi;
+always @(posedge clk or posedge rst) begin
+    if (rst) begin
+        inso <= 16'h0;
+        dout <= 16'h0;
+        aluo <= 8'h0;
+        memo <= 8'h0;
     end
-
-    always @(negedge clk) begin
-        inso <= inst;//original instruction
-        dout <= dt;
-        aluo <= alut;
-        memo <= memt;
+    else begin
+        inso <= insi;
+        dout <= din;
+        aluo <= alui;
+        memo <= memi;
     end
-    
+end
 endmodule

@@ -4,8 +4,7 @@ module InstructionMemory(
     input rst,
     output [15:0] ins // Instruction output (16 bits)
 );
-
-// Array of 256 memory locations, each 8 bits wide
+// Array of 256 memory locations
 reg [7:0] memory[0:255];
 
 always @(posedge rst) begin
@@ -78,28 +77,28 @@ always @(posedge rst) begin
         memory[65] <= 8'b00000000;
     end
 end
-
 assign ins = {memory[addr + 1], memory[addr]};
-
 endmodule
+
 
 // ---------------------------------Data memory-------------------------------------------------
 module DataMemory(
-    input [7:0] addr, // Address input (8 bits)
+    input [7:0] raddr, // Address input (8 bits)
+    input [7:0] waddr,
     input we, // Write enable signal
     input rst,
     input [7:0] din, // Data input (8 bits)
     output [7:0] dout // Data output (8 bits)
-    
 );
-reg [7:0] memory[0:255]; // Array of 256 memory locations, each 8 bits wide
+reg [7:0] memory[0:255];// Array of 256 memory locations, each 8 bits wide
 
 always @ (posedge we) begin
-    if (we) begin
-        memory[addr] <= din;
+    if (rst) begin
+        $display("--------------------Data memeory reset----------------------");
+    end
+    else if (we) begin
+        memory[waddr] <= din;
     end
 end
-
-assign dout = memory[addr];
-
+assign dout = memory[raddr];
 endmodule

@@ -8,7 +8,7 @@ module SCPU (
     wire [7:0] pc_in;
     wire pc_en;
 
-    ProgramCounter pc(.addi(pc_in), .clk(clk), .rst(rst), .addo(pc_out_wire));
+    ProgramCounter pc(.addi(pc_in), .clk(clk), .rst(rst), .we(pc_en), .addo(pc_out_wire));
 
     wire [7:0] adder_out_wire;
     EightBitAdder adder2(.a(8'h02), .b(pc_out_wire), .sum(adder_out_wire));
@@ -29,12 +29,19 @@ module SCPU (
     // access instruction memory
     InstructionMemory im(.addr(pc_out_wire), .rst(rst), .ins(w_ins0));
 
+    //bubble enable is the opposite of pc enable
+    wire bubble_en;
+    assign bubble_en = ~pc_en;
+
     //IF/ID stage register
-    IF_ID sreg0(.insi(w_ins0), .inso(w_ins1), .rst(rst), .clk(clk));
+    IF_ID sreg0(.insi(w_ins0), .inso(w_ins1), .rst(rst), .bubble_en(bubble_en), .clk(clk));
+
+    //Bubble Cntrl
+    BubbleCntrl bubblEntrl(.ins_ahead(w_ins1[7:0]), .ins_follow(w_ins0[7:0]), .clk(clk), .pc_en(pc_en));
 
     //Branch control unit
     wire [1:0] zn_wire;
-    BranchCntrl bcntrl(.ZN(zn_wire), .op(w_ins1[7:4]), .brx(w_ins1[3]), .pc_sec(pc_mux_sel), .lr_we(lr_en), .pc_en(pc_en));
+    BranchCntrl bcntrl(.ZN(zn_wire), .op(w_ins1[7:4]), .brx(w_ins1[3]), .pc_sec(pc_mux_sel), .lr_we(lr_en));
 
     // values of ra and rb between stages
     wire [15:0] vfr0, vfr1, vfr2;
@@ -54,14 +61,13 @@ module SCPU (
 
     wire [7:0] memo0, memo1;
     wire dm_en;
-    DataMemory dm(.addr(w_ins3[15:8]), .we(dm_en), .din(aluo1), .rst(rst), .dout(memo0));
+    DataMemory dm( .raddr(w_ins3[15:8]), .waddr(), .we(dm_en), .din(aluo1), .rst(rst), .dout(memo0));
 
     // DM/WB register
     DM_WB sreg3(.insi(w_ins3), .din(vfr2), .alui(aluo1), .memi(memo0), .clk(clk), .inso(w_ins4), .aluo(aluo2), .memo(memo1));
     ExtOutCntrl extrl(.ra(aluo2), .op(w_ins4[7:4]), .out(ext_out));
-
+    
     WBCntrl wbcntr(.alu(aluo2), .mem(memo1), .op(w_ins4[7:4]), .wbdata(main_rf_data_in), .rfwe(main_rf_we));
-
 endmodule
 
  
