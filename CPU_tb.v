@@ -13,7 +13,7 @@ module scpu_tb();
     in <= 8'h0f;
     rst <= 1'b1;
     #1 rst <= 1'b0;
-    #80 $stop;
+    #500 $stop;
   end
 
   always begin

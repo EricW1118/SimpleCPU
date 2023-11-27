@@ -41,7 +41,7 @@ module SCPU (
 
     //Branch control unit
     wire [1:0] zn_wire;
-    BranchCntrl bcntrl(.ZN(zn_wire), .op(w_ins1[7:4]), .brx(w_ins1[3]), .pc_sec(pc_mux_sel), .lr_we(lr_en));
+    BranchCntrl bcntrl(.ZN(zn_wire), .op(w_ins1[7:4]), .brx(w_ins1[3]), .clk(clk), .pc_sec(pc_mux_sel), .lr_we(lr_en));
 
     // values of ra and rb between stages
     wire [15:0] vfr0, vfr1, vfr2;
@@ -64,7 +64,7 @@ module SCPU (
     DataMemory dm( .raddr(w_ins3[15:8]), .waddr(), .we(dm_en), .din(aluo1), .rst(rst), .dout(memo0));
 
     // DM/WB register
-    DM_WB sreg3(.insi(w_ins3), .din(vfr2), .alui(aluo1), .memi(memo0), .clk(clk), .inso(w_ins4), .aluo(aluo2), .memo(memo1));
+    DM_WB sreg3(.insi(w_ins3), .din(vfr2), .alui(aluo1), .memi(memo0), .clk(clk), .rst(rst), .inso(w_ins4), .aluo(aluo2), .memo(memo1));
     ExtOutCntrl extrl(.ra(aluo2), .op(w_ins4[7:4]), .out(ext_out));
     
     WBCntrl wbcntr(.alu(aluo2), .mem(memo1), .op(w_ins4[7:4]), .wbdata(main_rf_data_in), .rfwe(main_rf_we));

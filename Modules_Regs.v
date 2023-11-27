@@ -43,6 +43,7 @@ always @(posedge we or posedge rst ) begin
     end
     else if (we) begin
         out <= in;
+        $display("LR instruction in :%b", in);
     end
 end
 endmodule

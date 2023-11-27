@@ -44,18 +44,33 @@ module BranchCntrl (
   input [1:0] ZN,
   input [3:0] op,
   input brx,
-  output [1:0] pc_sec,
-  output lr_we
+  input clk,
+  output reg [1:0] pc_sec = 2'b00,
+  output reg lr_we = 1'b0
 );
 
-// assign pc_sec = ((op == 4'b1001) || 
-//                  ({op, brx, ZN[1]} == 6'b101001) || 
-//                  ({op, brx, ZN[0]} == 6'b101011)) ? 2'b01 : 
-//                 (op == 4'b1100) ? 2'b11 : 2'b00;
-assign pc_sec = 2'b00; // test;
-
-//BR.SUB
-assign lr_we = (op == 4'b1011) ? 1'b1 : 1'b0;
+always @(negedge clk) begin
+    lr_we <= (op == 4'hb) ? 1'b1 : 1'b0;
+    if (op == 4'b1101) begin  //RETURN
+      pc_sec <= 2'b10;
+      $display("return branch jump");
+    end
+    else if (op == 4'h9) begin
+      pc_sec <= 2'b01;
+      $display("branch jump");
+    end
+    else if ({op, brx, ZN[1]} == 6'b101001) begin
+      pc_sec <= 2'b01;
+      $display("branch Z jump");
+    end
+    else if ({op, brx, ZN[0]} == 6'b101011) begin
+      pc_sec <= 2'b01;
+      $display("branch N jump");
+    end
+    else begin
+      pc_sec <= 2'b00;
+    end
+end
 
 endmodule
 
@@ -103,7 +118,6 @@ module BubbleCntrl (
    input clk,
    output reg pc_en
 );
-
 always @(negedge clk) begin 
   if (ins_ahead[7:4] === 4'hd  && 
       (ins_follow[7:4] == 4'h1 || 
