@@ -11,8 +11,7 @@ module SCPU (
     ProgramCounter pc(.addi(pc_in), .clk(clk), .rst(rst), .we(pc_en), .addo(pc_out_wire));
 
     wire [7:0] adder_out_wire;
-    EightBitAdder adder2(.a(8'h02), .b(pc_out_wire), .sum(adder_out_wire));
-
+    assign adder_out_wire = pc_out_wire + 8'h02;
     wire lr_en;
     wire [7:0] lr_out_wire;
     LR ilocker(.in(adder_out_wire), .we(lr_en), .rst(rst), .out(lr_out_wire));
