@@ -7,6 +7,13 @@ module InstructionMemory(
 // Array of 256 memory locations
 reg [7:0] memory[0:255];
 
+integer i;
+initial begin
+    for (i = 0; i < 256; i = i + 1) begin
+        memory[i] <= 8'h0;
+    end
+end
+
 always @(posedge rst) begin
     if (rst) begin
         memory[0] <= 8'b00000000;  //nop
@@ -23,7 +30,7 @@ always @(posedge rst) begin
         memory[11] <= 8'b00011111;
         memory[12] <= 8'b11110000; // loadimm 	r0,FF
         memory[13] <= 8'b11111111;
-        memory[14] <= 8'b1111010;  //loadimm		r1,FF
+        memory[14] <= 8'b11110100;  //loadimm		r1,FF
         memory[15] <= 8'b11111111;
         memory[16] <= 8'b01010000;  //shr		r0  loop
         memory[17] <= 8'b00000000;
@@ -80,23 +87,29 @@ end
 assign ins = {memory[addr + 1], memory[addr]};
 endmodule
 
-
 // ---------------------------------Data memory-------------------------------------------------
 module DataMemory(
     input [7:0] raddr, // Address input (8 bits)
     input [7:0] waddr,
     input we, // Write enable signal
-    input rst,
+    input clk,
     input [7:0] din, // Data input (8 bits)
     output [7:0] dout // Data output (8 bits)
 );
-reg [7:0] memory[0:255];// Array of 256 memory locations, each 8 bits wide
+// Data memory should be used after being allocated and initialized, therefore, we do not need initial values.
+reg [7:0] memory[0:255];
 
-always @ (posedge we) begin
-    if (rst) begin
-        $display("--------------------Data memeory reset----------------------");
+integer  i;
+initial begin
+    // memory[0] <= 8'b00110010;
+    for (i = 0; i < 256; i = i + 1) begin
+        memory[i] <= 8'h1;
     end
-    else if (we) begin
+end
+
+always @ (negedge clk) begin
+    if (we) begin
+        $display("data write in: %b, %b",waddr, din);
         memory[waddr] <= din;
     end
 end

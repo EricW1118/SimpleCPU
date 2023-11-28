@@ -9,17 +9,18 @@ module scpu_tb();
   SCPU mycpu(.ext_in(in), .clk(clk), .rst(rst), .ext_out(out));
 
   initial begin
-    clk = 1'b1;
+    clk = 1'b0;
     in <= 8'h0f;
-    rst <= 1'b1;
-    #1 rst <= 1'b0;
-    #500 $stop;
+    rst <= 1'b0;
+    #1 rst <= ~rst;
+    #1 rst <= ~rst;
+    #100000000 $stop;
   end
 
   always begin
-    #1 clk <= ~clk;
-    #1 clk <= ~clk;
-    $display("Final output = %d",out );
+    #2 clk <= ~clk;
+    #2 clk <= ~clk;
+    $display("Final output = %b",out);
   end
 
 endmodule

@@ -11,7 +11,7 @@ module SCPU (
     ProgramCounter pc(.addi(pc_in), .clk(clk), .rst(rst), .we(pc_en), .addo(pc_out_wire));
 
     wire [7:0] adder_out_wire;
-    assign adder_out_wire = pc_out_wire + 8'h02;
+    assign adder_out_wire = pc_out_wire + 8'b00000010; // address increment +2
     wire lr_en;
     wire [7:0] lr_out_wire;
     LR ilocker(.in(adder_out_wire), .we(lr_en), .rst(rst), .out(lr_out_wire));
@@ -23,7 +23,8 @@ module SCPU (
     wire [15:0] w_ins0, w_ins1, w_ins2, w_ins3, w_ins4;
 
     // 00: pc + 2, 01: immediate, 10: LR
-    Mux_3_to_1 pc_mux(.in0(adder_out_wire), .in1(w_ins1[15:8]), .in2(lr_out_wire), .sel(pc_mux_sel), .dout(pc_in));
+    Mux_3_to_1 pc_mux(.in0(adder_out_wire), .in1(w_ins1[15:8]), .in2(lr_out_wire), 
+                      .sel(pc_mux_sel), .dout(pc_in));
 
     // access instruction memory
     InstructionMemory im(.addr(pc_out_wire), .rst(rst), .ins(w_ins0));
@@ -48,25 +49,37 @@ module SCPU (
     wire main_rf_we;
 
     // Main register
-    MainRegister mrf(.rst(rst), .we(main_rf_we), .rd1(w_ins1[3:2]), .rd2(w_ins1[1:0]), .wd(w_ins4[3:2]), 
-                     .din(main_rf_data_in),.dout1(vfr0[15:8]), .dout2(vfr0[7:0]));
+    MainRegister mrf(.rst(rst), .clk(clk), .we(main_rf_we), .rd1(w_ins1[3:2]), .rd2(w_ins1[1:0]), .wd(w_ins4[3:2]), 
+                     .din(main_rf_data_in),.ra(vfr0[15:8]), .rb(vfr0[7:0]));
 
     // ID/EXE register
-    ID_EXE sreg1(.insi(w_ins1), .din(vfr0), .clk(clk), .rst(rst), .inso(w_ins2),  .dout(vfr1));
+    ID_EXE sreg1(.insi(w_ins1), .regDi(vfr0), .clk(clk), .rst(rst), .inso(w_ins2),  .regDo(vfr1));
 
     wire [7:0] aluo0, aluo1, aluo2;
-    ALU alu(.ex_in(ext_in), .imm(w_ins2[15:8]), .s1(vfr1[15:8]),  .s2(vfr1[7:0]), .mode(w_ins2[7:4]), .result(aluo0), .ZN(zn_wire));
-    EXE_DM sreg2( .insi(w_ins2), .din(vfr1), .alui(aluo0), .clk(clk), .rst(rst), .inso(w_ins3), .dout(vfr2), .aluo(aluo1));
+    wire [7:0] fw_ra, fw_rb;
+    ALU alu(.ex_in(ext_in), .imm(w_ins2[15:8]), .s1(fw_ra),  .s2(fw_rb), 
+            .mode(w_ins2[7:4]), .clk(clk), .result(aluo0), .ZN(zn_wire));
+
+    EXE_DM sreg2(.insi(w_ins2), .regDi(vfr1), .alui(aluo0), .clk(clk), 
+                 .rst(rst), .inso(w_ins3), .regDo(vfr2), .aluo(aluo1));
+                 
+    EXE_Forward exf(.ins_ahead(w_ins3), .ins_follow(w_ins2), .ra(vfr1[15:8]), .rb(vfr1[7:0]), 
+                    .alu_result(aluo1), .rao(fw_ra), .rbo(fw_rb));
 
     wire [7:0] memo0, memo1;
     wire dm_en;
-    DataMemory dm( .raddr(w_ins3[15:8]), .waddr(), .we(dm_en), .din(aluo1), .rst(rst), .dout(memo0));
+    DMWriteCntrl dmcnt(.op(w_ins3[7:4]), .dm_en(dm_en));
+    DataMemory dm(.raddr(w_ins3[15:8]), .waddr(w_ins3[15:8]), 
+                  .we(dm_en), .din(aluo1), .clk(clk), .dout(memo0));
 
     // DM/WB register
-    DM_WB sreg3(.insi(w_ins3), .din(vfr2), .alui(aluo1), .memi(memo0), .clk(clk), .rst(rst), .inso(w_ins4), .aluo(aluo2), .memo(memo1));
-    ExtOutCntrl extrl(.ra(aluo2), .op(w_ins4[7:4]), .out(ext_out));
+    DM_WB sreg3(.insi(w_ins3), .regDi(vfr2), .alui(aluo1), .memi(memo0), 
+                .clk(clk), .rst(rst), .regDo(), .inso(w_ins4), .aluo(aluo2),.memo(memo1));
+
+    ExtOutCntrl extrl(.ra(aluo2), .op(w_ins4[7:4]), .clk(clk), .out(ext_out));
     
-    WBCntrl wbcntr(.alu(aluo2), .mem(memo1), .op(w_ins4[7:4]), .wbdata(main_rf_data_in), .rfwe(main_rf_we));
+    WBCntrl wbcntr(.alu(aluo2), .mem(memo1), .op(w_ins4[7:4]), 
+                   .wbdata(main_rf_data_in), .rfwe(main_rf_we));
 endmodule
 
  

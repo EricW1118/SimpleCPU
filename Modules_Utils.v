@@ -49,17 +49,19 @@ always @(negedge clk) begin
       pc_sec <= 2'b00;
     end
 end
-
 endmodule
 
 module ExtOutCntrl (
     input [7:0] ra, 
     input [3:0] op,
-    input we,
+    input clk,
     output reg[7:0] out
 );
 
-always @(posedge we) begin 
+initial begin
+   out <= 8'h0;
+end
+always @(negedge clk) begin 
   if (op == 4'b0110) begin
     out <= ra;
   end
@@ -72,7 +74,7 @@ endmodule
 module WBCntrl (
   input [7:0] alu,
   input [7:0] mem,
-  input [7:4] op,
+  input [3:0] op,
   output [7:0] wbdata,
   output rfwe
 );
@@ -85,10 +87,8 @@ assign rfwe = ( (op ==  4'h1) || // ADD
                 (op ==  4'h8) || // MOV
                 (op ==  4'hd) || // LOAD
                 (op ==  4'hf) ) ? 1'b1 : 1'b0; // LOADIMM
-// LOAD
 assign wbdata = (op == 4'hd) ? mem : alu;
 endmodule
-
 
 module BubbleCntrl (
    input [7:0] ins_ahead,
@@ -96,6 +96,7 @@ module BubbleCntrl (
    input clk,
    output reg pc_en
 );
+
 always @(negedge clk) begin 
   if (ins_ahead[7:4] === 4'hd  && 
       (ins_follow[7:4] == 4'h1 || 
@@ -105,7 +106,7 @@ always @(negedge clk) begin
        ins_follow[7:4] == 4'h5 )  && 
       ((ins_ahead[3:2] == ins_follow[3:2]) ||  
        (ins_ahead[3:2] == ins_follow[1:0]))) begin
-          pc_en <= 1'b0; // Bubble detected, PC stall
+          pc_en <= 1'b0; // Bubble inserted, PC stall
           $display("bubble check ------");
         end
   else begin
@@ -114,17 +115,80 @@ always @(negedge clk) begin
 end
 endmodule
 
-
-module WB_DM_ForwardCntrl (
-
+module DMWriteCntrl ( 
+  input [3:0] op,
+  output dm_en
 );
-  
+assign dm_en = (op === 4'he) ? 1'b1 : 1'b0; // STORE
 endmodule
 
-module EXE_ForwardCntrl (
+// Handle DB to DM forwarding
+module WB_DM_Forward (
 
+); 
+endmodule
+
+// Handle EXE to EXE forwarding
+module EXE_Forward (
+  input [15:0] ins_ahead,
+  input [15:0] ins_follow,
+  input [7:0] ra,
+  input [7:0] rb,
+  input [7:0] alu_result,
+  output [7:0] rao,
+  output [7:0] rbo
 );
-  
+
+function  isWrite (input [15:0] ins); 
+    begin
+        if (ins[7:4] == 4'h1 ||
+            ins[7:4] == 4'h2 ||
+            ins[7:4] == 4'h3 ||
+            ins[7:4] == 4'h4 ||
+            ins[7:4] == 4'h5 ||
+            ins[7:4] == 4'h7 ||
+            ins[7:4] == 4'h8)
+          isWrite = 1'b1;
+        else 
+          isWrite = 1'b0;
+    end
+endfunction
+
+function  isRead_ra (input [15:0] ins); 
+    begin
+        if (ins[7:4] == 4'h1 ||
+            ins[7:4] == 4'h2 ||
+            ins[7:4] == 4'h3 ||
+            ins[7:4] == 4'h4 ||
+            ins[7:4] == 4'h5 ||
+            ins[7:4] == 4'h6 || 
+            ins[7:4] == 4'he)
+          isRead_ra = 1'b1;
+        else 
+          isRead_ra = 1'b0;
+    end
+endfunction
+
+function  isRead_rb (input [15:0] ins); 
+    begin
+        if (ins[7:4] == 4'h1 ||
+            ins[7:4] == 4'h2 ||
+            ins[7:4] == 4'h3 ||
+            ins[7:4] == 4'h8)
+          isRead_rb = 1'b1;
+        else 
+          isRead_rb = 1'b0;
+    end
+endfunction
+
+assign rao = (isWrite(ins_ahead) && 
+              isRead_ra (ins_follow) && 
+              ins_ahead[3:2] == ins_follow[3:2]) ? alu_result : ra;
+
+assign rbo = (isWrite(ins_ahead) && 
+              isRead_rb(ins_follow) && 
+              ins_ahead[3:2] == ins_follow[1:0]) ? alu_result : rb;
+        
 endmodule
 
 // Multiplexor of 3 -> 1

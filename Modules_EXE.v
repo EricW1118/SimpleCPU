@@ -1,49 +1,58 @@
 // -----------------------------------ALU------------------------------------------
 module ALU (
-    input [7:0] ex_in,
-    input [7:0] imm,
-    input [7:0] s1, // first oprand
-    input [7:0] s2,// second oprand
+    input signed [7:0] ex_in,
+    input signed [7:0] imm,
+    input signed [7:0] s1, // first oprand
+    input signed [7:0] s2,// second oprand
     input [3:0] mode, // depends on the opration code
     input clk,
-    output [7:0] result, // the calculation output
+    output reg signed [7:0] result, // the calculation output
     output reg [1:0] ZN
 );
-
-assign result = (mode == 4'h7) ? ex_in :
-	            (mode == 4'he) ? s1 :
-                (mode == 4'hf) ? imm :
-                (mode == 4'h8) ? s2 : 
-                (mode == 4'h1) ? s1 + s2 :
-                (mode == 4'h2) ? s1 - s2 : 
-                (mode == 4'h3) ? ~(s1 & s2) :
-                (mode == 4'h4) ? {s1[6:0], 1'b0} :
-                (mode == 4'h5) ? {1'b0, s1[7:1]} : 8'h0;
-                
-always @(negedge clk) begin
-    case (mode)
-        4'h1: begin // ADD
-            ZN[1] <= (s1 + s2) ? 1'b1 : 1'b0;
-            ZN[0] <= (s1 + s2) < 0 ? 1'b1 : 1'b0;
-        end
-        4'h2: begin // ADD
-            ZN[1] <= (s1 == s2) ? 1'b1 : 1'b0;
-            ZN[0] <= (s1 < s2) ? 1'b1 : 1'b0;
-        end
-        4'h3: begin // NAND
-            ZN[1] <= (~(s1 & s2)) ? 1'b1 : 1'b0;
-            ZN[0] <= ((~(s1 & s2)) < 0) ? 1'b1 : 1'b0;
-        end
-        4'h4: begin // SHL
-            ZN[1] <= s1[7];
-        end
-        4'h5: begin // SHR
-            ZN[1] <= s1[0];
-        end
-        default:;
-    endcase
+always @(negedge clk ) begin
+    $display("current mode: %d", mode);
+    if (mode === 4'h7) begin //IN
+        result <= ex_in;
+    end
+    else if (mode === 4'h6) begin //OUT 
+        result <= s1;
+    end
+    else if (mode === 4'he)  begin //STORE
+        result <= s1;
+    end
+    else if (mode === 4'hf) begin //LOADIMM
+        result <= imm;
+    end
+    else if (mode === 4'he) begin //STORE
+        result <= s1;
+    end
+    else if (mode === 4'h1) begin
+        result = s1 + s2;
+        ZN[1] <= result ? 1'b1 : 1'b0;
+        ZN[0] <= result < 0 ? 1'b1 : 1'b0;
+    end
+    else if (mode === 4'h2) begin
+        result = s1 - s2;
+        ZN[1] <= result ? 1'b1 : 1'b0;
+        ZN[0] <= result < 0 ? 1'b1 : 1'b0;
+    end
+    else if (mode === 4'h3) begin
+        result = ~(s1 & s2);
+        ZN[1] <= result ? 1'b1 : 1'b0;
+        ZN[0] <= result < 0 ? 1'b1 : 1'b0;
+    end
+    else if (mode === 4'h4) begin
+        result <= {s1[6:0], 1'b0} ;
+        ZN[1] <= s1[7];
+    end
+    else if (mode === 4'h5) begin
+        result <= {1'b0, s1[7:1]};
+        ZN[1] <= s1[0];
+    end
+    else begin
+        result <= 8'h0;
+    end
 end
-
 endmodule
 
 
