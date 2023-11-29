@@ -14,7 +14,7 @@ module SCPU (
     assign adder_out_wire = pc_out_wire + 8'h02; // address increment +2
     wire lr_en;
     wire [7:0] lr_out_wire;
-    LR ilocker(.sub_addi(pc_out_wire), .we(lr_en), .sub_addo(lr_out_wire));
+    LR ilocker(.sub_addi(adder_out_wire), .we(lr_en), .sub_addo(lr_out_wire));
 
     // selection signal for pc input
     wire[1:0] pc_mux_sel;

@@ -7,7 +7,7 @@ module ProgramCounter (
   output reg [7:0] addo
 );
 
-always @(posedge clk or posedge rst) begin
+always @(negedge clk or posedge rst) begin
     if (rst) begin
        addo <= 8'h0;
     end
@@ -15,6 +15,7 @@ always @(posedge clk or posedge rst) begin
       addo <= addi;
     end
 end
+
 endmodule
 
 // Branch control
