@@ -11,10 +11,10 @@ module SCPU (
     ProgramCounter pc(.addi(pc_in), .clk(clk), .rst(rst), .we(pc_en), .addo(pc_out_wire));
 
     wire [7:0] adder_out_wire;
-    assign adder_out_wire = pc_out_wire + 8'b00000010; // address increment +2
+    assign adder_out_wire = pc_out_wire + 8'h02; // address increment +2
     wire lr_en;
     wire [7:0] lr_out_wire;
-    LR ilocker(.in(adder_out_wire), .we(lr_en), .rst(rst), .out(lr_out_wire));
+    LR ilocker(.sub_addi(adder_out_wire), .we(lr_en), .sub_addo(lr_out_wire));
 
     // selection signal for pc input
     wire[1:0] pc_mux_sel;
@@ -37,11 +37,11 @@ module SCPU (
     IF_ID sreg0(.insi(w_ins0), .inso(w_ins1), .rst(rst), .bubble_en(bubble_en), .clk(clk));
 
     //Bubble Cntrl
-    BubbleCntrl bubblEntrl(.ins_ahead(w_ins1[7:0]), .ins_follow(w_ins0[7:0]), .clk(clk), .pc_en(pc_en));
+    BubbleCntrl bbcntrl(.ins_ahead(w_ins1[7:0]), .ins_follow(w_ins0[7:0]), .clk(clk), .pc_en(pc_en));
 
     //Branch control unit
     wire [1:0] zn_wire;
-    BranchCntrl bcntrl(.ZN(zn_wire), .op(w_ins1[7:4]), .brx(w_ins1[3]), .clk(clk), .pc_sec(pc_mux_sel), .lr_we(lr_en));
+    BranchCntrl bcntrl(.ZN(zn_wire), .op(w_ins1[7:4]), .brx(w_ins1[3]), .lr_we(lr_en), .pc_sec(pc_mux_sel));
 
     // values of ra and rb between stages
     wire [15:0] vfr0, vfr1, vfr2;
@@ -70,12 +70,12 @@ module SCPU (
                   .we(dm_en), .din(aluo1), .clk(clk), .dout(memo0));
 
     // DM/WB register
-    DM_WB sreg3(.insi(w_ins3), .regDi(vfr2), .alui(aluo1), .memi(memo0), 
-                .clk(clk), .rst(rst), .regDo(), .inso(w_ins4), .aluo(aluo2),.memo(memo1));
+    DM_WB sreg3(.insi(w_ins3), .alui(aluo1), .memi(memo0), 
+                .clk(clk), .rst(rst), .inso(w_ins4), .aluo(aluo2), .memo(memo1));
 
     // Forwarding control for DM to EXE, EXE to EXE
     ForwardCntrl fcntrl(.exeout_ahead(w_ins3), .dmout_ahead(w_ins4), .ins_follow(w_ins2), 
-                        .ra(vfr1[15:8]), .rb(vfr1[7:0]), .alu_result(aluo1), .mem_out(memo0), .rao(fw_ra), .rbo(fw_rb));
+                        .ra(vfr1[15:8]), .rb(vfr1[7:0]), .alu_result(aluo1), .dm_alu_out(aluo2), .dm_mem_out(memo1), .rao(fw_ra), .rbo(fw_rb));
 
     ExtOutCntrl extrl(.ra(aluo2), .op(w_ins4[7:4]), .clk(clk), .out(ext_out));
     

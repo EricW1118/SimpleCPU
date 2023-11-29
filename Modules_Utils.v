@@ -22,33 +22,17 @@ module BranchCntrl (
   input [1:0] ZN,
   input [3:0] op,
   input brx,
-  input clk,
-  output reg [1:0] pc_sec = 2'b00,
-  output reg lr_we = 1'b0
+  output lr_we,
+  output [1:0] pc_sec
 );
 
-always @(negedge clk) begin
-    lr_we <= (op == 4'hb) ? 1'b1 : 1'b0; //BR.SUB
-    if (op == 4'hc) begin  //RETURN
-      pc_sec <= 2'b10;
-      $display("return branch jump");
-    end
-    else if (op == 4'h9) begin //BR
-      pc_sec <= 2'b01;
-      $display("branch jump");
-    end
-    else if ({op, brx, ZN[1]} == 6'b101001) begin //BR.Z
-      pc_sec <= 2'b01;
-      $display("branch Z jump");
-    end
-    else if ({op, brx, ZN[0]} == 6'b101011) begin //BR.N
-      pc_sec <= 2'b01;
-      $display("branch N jump");
-    end
-    else begin
-      pc_sec <= 2'b00;
-    end
-end
+assign  lr_we = (op == 4'hb) ? 1'b1 : 1'b0; //BR.SUB
+assign  pc_sec = (op == 4'hc) ? 2'b10 : //RETURN
+                 ((op == 4'h9) || //BR
+                  (op == 4'hb) || //BR.SUB
+                  ({op, brx, ZN[1]} == 6'b101001) || //BR.Z
+                  ({op, brx, ZN[0]} == 6'b101011)) ? 2'b01 : 2'b00; //BR.N            
+
 endmodule
 
 module ExtOutCntrl (
@@ -60,6 +44,7 @@ module ExtOutCntrl (
 
 always @(negedge clk) begin 
   if (op == 4'b0110) begin
+    $display("Final output = %h",ra);
     out <= ra;
   end
 end
@@ -144,7 +129,8 @@ module ForwardCntrl (
   input [7:0] ra,
   input [7:0] rb,
   input [7:0] alu_result,
-  input [7:0] mem_out,
+  input [7:0] dm_mem_out,
+  input [7:0] dm_alu_out,
   output [7:0] rao,
   output [7:0] rbo
 );
@@ -181,11 +167,13 @@ function is_load (input [3:0] op );
   is_load = (op == 4'hd) ? 1'b1 : 1'b0;
 endfunction
 
-assign rao = (is_load(dmout_ahead[7:4]) && is_read_ra(ins_follow[7:4]) && (dmout_ahead[3:2] == ins_follow[3:2])) ? mem_out : 
-             (is_write_ra(exeout_ahead[7:4]) && is_read_ra(ins_follow[7:4]) && (exeout_ahead[3:2] == ins_follow[3:2])) ? alu_result : ra;
+assign rao = (is_load(dmout_ahead[7:4]) && is_read_ra(ins_follow[7:4]) && (dmout_ahead[3:2] == ins_follow[3:2])) ? dm_mem_out : 
+             (is_write_ra(exeout_ahead[7:4]) && is_read_ra(ins_follow[7:4]) && (exeout_ahead[3:2] == ins_follow[3:2])) ? alu_result : 
+             (is_write_ra(dmout_ahead[7:4]) && is_read_ra(ins_follow[7:4]) && (dmout_ahead[3:2] == ins_follow[3:2])) ? dm_alu_out : ra;
 
-assign rbo = (is_load(dmout_ahead[7:4]) && is_read_rb(ins_follow[7:4]) && (dmout_ahead[3:2] == ins_follow[1:0])) ? mem_out :
-             (is_write_ra(exeout_ahead[7:4]) && is_read_rb(ins_follow[7:4]) && (exeout_ahead[3:2] == ins_follow[1:0])) ? alu_result : rb;
+assign rbo = (is_load(dmout_ahead[7:4]) && is_read_rb(ins_follow[7:4]) && (dmout_ahead[3:2] == ins_follow[1:0])) ? dm_mem_out :
+             (is_write_ra(exeout_ahead[7:4]) && is_read_rb(ins_follow[7:4]) && (exeout_ahead[3:2] == ins_follow[1:0])) ? alu_result :
+             (is_write_ra(dmout_ahead[7:4]) && is_read_rb(ins_follow[7:4]) && (dmout_ahead[3:2] == ins_follow[1:0])) ? dm_alu_out : rb;
 endmodule
 
 // Multiplexor of 3 -> 1

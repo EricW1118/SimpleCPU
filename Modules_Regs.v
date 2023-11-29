@@ -30,19 +30,15 @@ endmodule
 
 //  LR register for CALL and RETURN
 module LR (
-    input [7:0] in,
+    input [7:0] sub_addi,
     input we,
-    input rst,
-    output reg[7:0] out
+    output reg[7:0] sub_addo
 );
 
-always @(posedge we or posedge rst ) begin
-    if (rst) begin
-        out <= 8'h00;
-    end
-    else if (we) begin
-        out <= in;
-        $display("LR instruction in :%b", in);
+always @(posedge we) begin
+    if (we) begin
+        sub_addo <= sub_addi;
+        $display("LR instruction in :%h", sub_addi);
     end
 end
 endmodule
@@ -55,6 +51,7 @@ module IF_ID (
     input bubble_en,
     output reg [15:0] inso
 );
+
 always @(posedge clk or posedge rst) begin
     if (rst) begin
         inso <= 16'h0; // reset value
@@ -123,26 +120,22 @@ endmodule
 // ----------------------------------DM/WB-----------------------------------------
 module DM_WB (
     input [15:0] insi,//original instruction
-    input [15:0] regDi,
     input [7:0] alui,
     input [7:0] memi,
     input clk, // write enable bite
     input rst,
     output reg [15:0] inso,//original instruction
-    output reg [15:0] regDo,
     output reg [7:0] aluo,
     output reg [7:0] memo
 );
 always @(posedge clk or posedge rst) begin
     if (rst) begin
         inso <= 16'h0;
-        regDo <= 16'h0;
         aluo <= 8'h0;
         memo <= 8'h0;
     end
     else begin
         inso <= insi;
-        regDo <= regDi;
         aluo <= alui;
         memo <= memi;
     end

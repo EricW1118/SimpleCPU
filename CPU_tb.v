@@ -20,7 +20,6 @@ module scpu_tb();
   always begin
     #2 clk <= ~clk;
     #2 clk <= ~clk;
-    $display("Final output = %b",out);
   end
 
 endmodule
