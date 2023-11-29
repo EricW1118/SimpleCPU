@@ -28,20 +28,20 @@ module BranchCntrl (
 );
 
 always @(negedge clk) begin
-    lr_we <= (op == 4'hb) ? 1'b1 : 1'b0;
-    if (op == 4'b1101) begin  //RETURN
+    lr_we <= (op == 4'hb) ? 1'b1 : 1'b0; //BR.SUB
+    if (op == 4'hc) begin  //RETURN
       pc_sec <= 2'b10;
       $display("return branch jump");
     end
-    else if (op == 4'h9) begin
+    else if (op == 4'h9) begin //BR
       pc_sec <= 2'b01;
       $display("branch jump");
     end
-    else if ({op, brx, ZN[1]} == 6'b101001) begin
+    else if ({op, brx, ZN[1]} == 6'b101001) begin //BR.Z
       pc_sec <= 2'b01;
       $display("branch Z jump");
     end
-    else if ({op, brx, ZN[0]} == 6'b101011) begin
+    else if ({op, brx, ZN[0]} == 6'b101011) begin //BR.N
       pc_sec <= 2'b01;
       $display("branch N jump");
     end
@@ -55,20 +55,15 @@ module ExtOutCntrl (
     input [7:0] ra, 
     input [3:0] op,
     input clk,
-    output reg[7:0] out
+    output reg [7:0] out = 8'h0
 );
 
-initial begin
-   out <= 8'h0;
-end
 always @(negedge clk) begin 
   if (op == 4'b0110) begin
     out <= ra;
   end
 end
-
 endmodule
-
 
 // Write back control
 module WBCntrl (
@@ -87,7 +82,7 @@ assign rfwe = ( (op ==  4'h1) || // ADD
                 (op ==  4'h8) || // MOV
                 (op ==  4'hd) || // LOAD
                 (op ==  4'hf) ) ? 1'b1 : 1'b0; // LOADIMM
-assign wbdata = (op == 4'hd) ? mem : alu;
+assign wbdata = (op == 4'hd) ? mem : alu; // LOAD
 endmodule
 
 module BubbleCntrl (
@@ -97,18 +92,37 @@ module BubbleCntrl (
    output reg pc_en
 );
 
+function is_read_ra(input [3:0] op);
+  begin
+    is_read_ra = (op == 4'h1 || //ADD
+                  op == 4'h2 || //SUB
+                  op == 4'h3 || //NAND
+                  op == 4'h4 || //SHL
+                  op == 4'h5 || //SHR
+                  op == 4'h6 || //OUT
+                  op == 4'he) ? 1'b1 : 1'b0;   //STORE
+  end
+endfunction 
+
+function is_read_rb (input [3:0] op);
+  begin
+    is_read_rb = (op == 4'h1 || //ADD
+                  op == 4'h2 || //SUB
+                  op == 4'h3 || //NAND
+                  op == 4'h8) ? 1'b1 : 1'b0; //MOV
+  end
+endfunction
+
+// Load followed by another instruction
 always @(negedge clk) begin 
-  if (ins_ahead[7:4] === 4'hd  && 
-      (ins_follow[7:4] == 4'h1 || 
-       ins_follow[7:4] == 4'h2 || 
-       ins_follow[7:4] == 4'h3 || 
-       ins_follow[7:4] == 4'h4 || 
-       ins_follow[7:4] == 4'h5 )  && 
-      ((ins_ahead[3:2] == ins_follow[3:2]) ||  
-       (ins_ahead[3:2] == ins_follow[1:0]))) begin
-          pc_en <= 1'b0; // Bubble inserted, PC stall
-          $display("bubble check ------");
-        end
+  if ( ins_ahead[7:4] == 4'hd && 
+       (is_read_ra(ins_follow[7:4]) && ins_ahead[3:2] == ins_follow[3:2])) begin
+        pc_en <= 1'b0; // Bubble inserted, PC stall
+  end
+  else if (ins_ahead[7:4] == 4'hd && 
+           (is_read_rb(ins_follow[7:4]) && ins_ahead[3:2] == ins_follow[1:0])) begin
+        pc_en <= 1'b0; // Bubble inserted, PC stall
+  end
   else begin
     pc_en <= 1'b1;
   end
@@ -122,73 +136,56 @@ module DMWriteCntrl (
 assign dm_en = (op === 4'he) ? 1'b1 : 1'b0; // STORE
 endmodule
 
-// Handle DB to DM forwarding
-module WB_DM_Forward (
-
-); 
-endmodule
-
 // Handle EXE to EXE forwarding
-module EXE_Forward (
-  input [15:0] ins_ahead,
+module ForwardCntrl (
+  input [15:0] exeout_ahead,
+  input [15:0] dmout_ahead,
   input [15:0] ins_follow,
   input [7:0] ra,
   input [7:0] rb,
   input [7:0] alu_result,
+  input [7:0] mem_out,
   output [7:0] rao,
   output [7:0] rbo
 );
 
-function  isWrite (input [15:0] ins); 
-    begin
-        if (ins[7:4] == 4'h1 ||
-            ins[7:4] == 4'h2 ||
-            ins[7:4] == 4'h3 ||
-            ins[7:4] == 4'h4 ||
-            ins[7:4] == 4'h5 ||
-            ins[7:4] == 4'h7 ||
-            ins[7:4] == 4'h8)
-          isWrite = 1'b1;
-        else 
-          isWrite = 1'b0;
-    end
+function  is_write_ra (input [3:0] op); 
+  is_write_ra =  (op == 4'h1 ||
+                  op == 4'h2 ||
+                  op == 4'h3 ||
+                  op == 4'h4 ||
+                  op == 4'h5 ||
+                  op == 4'h7 ||
+                  op == 4'h8 ||
+                  op == 4'hf) ? 1'b1 : 1'b0;
 endfunction
 
-function  isRead_ra (input [15:0] ins); 
-    begin
-        if (ins[7:4] == 4'h1 ||
-            ins[7:4] == 4'h2 ||
-            ins[7:4] == 4'h3 ||
-            ins[7:4] == 4'h4 ||
-            ins[7:4] == 4'h5 ||
-            ins[7:4] == 4'h6 || 
-            ins[7:4] == 4'he)
-          isRead_ra = 1'b1;
-        else 
-          isRead_ra = 1'b0;
-    end
+function  is_read_ra (input [3:0] op); 
+  is_read_ra = (op == 4'h1 ||
+                op == 4'h2 ||
+                op == 4'h3 ||
+                op == 4'h4 ||
+                op == 4'h5 ||
+                op == 4'h6 || 
+                op == 4'he) ? 1'b1 : 1'b0;
 endfunction
 
-function  isRead_rb (input [15:0] ins); 
-    begin
-        if (ins[7:4] == 4'h1 ||
-            ins[7:4] == 4'h2 ||
-            ins[7:4] == 4'h3 ||
-            ins[7:4] == 4'h8)
-          isRead_rb = 1'b1;
-        else 
-          isRead_rb = 1'b0;
-    end
+function  is_read_rb (input [3:0] op); 
+  is_read_rb = (op == 4'h1 ||
+                op == 4'h2 ||
+                op == 4'h3 ||
+                op == 4'h8) ? 1'b1 : 1'b0;
 endfunction
 
-assign rao = (isWrite(ins_ahead) && 
-              isRead_ra (ins_follow) && 
-              ins_ahead[3:2] == ins_follow[3:2]) ? alu_result : ra;
+function is_load (input [3:0] op );
+  is_load = (op == 4'hd) ? 1'b1 : 1'b0;
+endfunction
 
-assign rbo = (isWrite(ins_ahead) && 
-              isRead_rb(ins_follow) && 
-              ins_ahead[3:2] == ins_follow[1:0]) ? alu_result : rb;
-        
+assign rao = (is_load(dmout_ahead[7:4]) && is_read_ra(ins_follow[7:4]) && (dmout_ahead[3:2] == ins_follow[3:2])) ? mem_out : 
+             (is_write_ra(exeout_ahead[7:4]) && is_read_ra(ins_follow[7:4]) && (exeout_ahead[3:2] == ins_follow[3:2])) ? alu_result : ra;
+
+assign rbo = (is_load(dmout_ahead[7:4]) && is_read_rb(ins_follow[7:4]) && (dmout_ahead[3:2] == ins_follow[1:0])) ? mem_out :
+             (is_write_ra(exeout_ahead[7:4]) && is_read_rb(ins_follow[7:4]) && (exeout_ahead[3:2] == ins_follow[1:0])) ? alu_result : rb;
 endmodule
 
 // Multiplexor of 3 -> 1

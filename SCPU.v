@@ -58,13 +58,10 @@ module SCPU (
     wire [7:0] aluo0, aluo1, aluo2;
     wire [7:0] fw_ra, fw_rb;
     ALU alu(.ex_in(ext_in), .imm(w_ins2[15:8]), .s1(fw_ra),  .s2(fw_rb), 
-            .mode(w_ins2[7:4]), .clk(clk), .result(aluo0), .ZN(zn_wire));
+            .op(w_ins2[7:4]), .clk(clk), .result(aluo0), .ZN(zn_wire));
 
     EXE_DM sreg2(.insi(w_ins2), .regDi(vfr1), .alui(aluo0), .clk(clk), 
                  .rst(rst), .inso(w_ins3), .regDo(vfr2), .aluo(aluo1));
-                 
-    EXE_Forward exf(.ins_ahead(w_ins3), .ins_follow(w_ins2), .ra(vfr1[15:8]), .rb(vfr1[7:0]), 
-                    .alu_result(aluo1), .rao(fw_ra), .rbo(fw_rb));
 
     wire [7:0] memo0, memo1;
     wire dm_en;
@@ -75,6 +72,10 @@ module SCPU (
     // DM/WB register
     DM_WB sreg3(.insi(w_ins3), .regDi(vfr2), .alui(aluo1), .memi(memo0), 
                 .clk(clk), .rst(rst), .regDo(), .inso(w_ins4), .aluo(aluo2),.memo(memo1));
+
+    // Forwarding control for DM to EXE, EXE to EXE
+    ForwardCntrl fcntrl(.exeout_ahead(w_ins3), .dmout_ahead(w_ins4), .ins_follow(w_ins2), 
+                        .ra(vfr1[15:8]), .rb(vfr1[7:0]), .alu_result(aluo1), .mem_out(memo0), .rao(fw_ra), .rbo(fw_rb));
 
     ExtOutCntrl extrl(.ra(aluo2), .op(w_ins4[7:4]), .clk(clk), .out(ext_out));
     
