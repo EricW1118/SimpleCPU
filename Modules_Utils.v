@@ -45,7 +45,6 @@ module ExtOutCntrl (
 
 always @(negedge clk) begin 
   if (op == 4'b0110) begin
-    $display("Final output = %h",ra);
     out <= ra;
   end
 end

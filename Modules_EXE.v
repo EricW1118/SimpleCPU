@@ -24,7 +24,6 @@ assign result = (op == 4'h1) ? s1 + s2 : //ADD
                 (op == 4'h8) ? s2 : 8'h0;//MOV
 
 always @(negedge clk ) begin
-    $display("op: %h, %h", op, s1);
     if (op == 4'h1 || op == 4'h2 || op === 4'h3) begin //ADD, SUB, NAND
         ZN[1] <= (result == 0) ? 1'b1 : 1'b0;
         ZN[0] <= (result < 0) ? 1'b1 : 1'b0;

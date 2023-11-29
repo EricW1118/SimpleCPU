@@ -109,7 +109,6 @@ end
 
 always @ (negedge clk) begin
     if (we) begin
-        $display("data write in: %b, %b",waddr, din);
         memory[waddr] <= din;
     end
 end

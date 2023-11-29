@@ -38,7 +38,6 @@ module LR (
 always @(posedge we) begin
     if (we) begin
         sub_addo <= sub_addi;
-        $display("LR instruction in :%h", sub_addi);
     end
 end
 endmodule
@@ -58,7 +57,6 @@ always @(posedge clk or posedge rst) begin
     end
     else if (bubble_en)begin
         inso <= 16'h0; // insert bubble
-        $display("Bubble insert between %b and %b", insi, inso);
     end
     else begin
         inso <= insi;  // regular
