@@ -7,8 +7,8 @@ module ProgramCounter (
   output reg [7:0] addo
 );
 
-always @(negedge clk or posedge rst) begin
-    if (rst) begin
+always @(negedge clk or negedge rst) begin
+    if (~rst) begin
        addo <= 8'h0;
     end
     else if(we) begin

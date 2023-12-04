@@ -12,8 +12,8 @@ module MainRegister (
     output [7:0] rb
 );
 reg [7:0] regis [0:3]; // Array of 4 registers, each 8 bits 
-always @ (negedge clk or posedge rst ) begin
-    if (rst) begin
+always @ (negedge clk or negedge rst ) begin
+    if (~rst) begin
         regis[0] <= 8'h00;
         regis[1] <= 8'h00;
         regis[2] <= 8'h00;
@@ -51,8 +51,8 @@ module IF_ID (
     output reg [15:0] inso
 );
 
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
+always @(posedge clk or negedge rst) begin
+    if (~rst) begin
         inso <= 16'h0; // reset value
     end
     else if (bubble_en)begin
@@ -76,8 +76,8 @@ module ID_EXE (
     output reg [15:0] regDo
 );
 
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
+always @(posedge clk or negedge rst) begin
+    if (~rst) begin
         inso <= 16'h0;
         regDo <= 16'h0;
     end
@@ -100,8 +100,8 @@ module EXE_DM (
     output reg [15:0] regDo,
     output reg [7:0] aluo
 );
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
+always @(posedge clk or negedge rst) begin
+    if (~rst) begin
         inso <= 16'h0;
         regDo <= 16'h0;
         aluo <= 8'h0;
@@ -126,8 +126,8 @@ module DM_WB (
     output reg [7:0] aluo,
     output reg [7:0] memo
 );
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
+always @(posedge clk or negedge rst) begin
+    if (~rst) begin
         inso <= 16'h0;
         aluo <= 8'h0;
         memo <= 8'h0;

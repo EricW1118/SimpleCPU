@@ -11,7 +11,7 @@ module scpu_board_tb();
   initial begin
     clk = 1'b0;
     in <= 8'h0f;
-    rst <= 1'b0;
+    rst <= 1'b1;
     #1 rst <= ~rst;
     #1 rst <= ~rst;
   end

@@ -14,8 +14,8 @@ initial begin
     end
 end
 
-always @(posedge rst) begin
-    if (rst) begin
+always @(negedge rst) begin
+    if (~rst) begin
         memory[0] <= 8'b00000000;  //nop
         memory[1] <= 8'b00000000;
         memory[2] <= 8'b00000000;	 //nop
