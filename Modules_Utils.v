@@ -7,13 +7,14 @@ module ProgramCounter (
   output reg [7:0] addo
 );
 
-always @(negedge clk or negedge rst) begin
+always @(posedge clk or negedge rst) begin
     if (~rst) begin
        addo <= 8'h0;
     end
     else if(we) begin
       addo <= addi;
     end
+    $display("address: %d", addo);
 end
 
 endmodule
@@ -24,7 +25,8 @@ module BranchCntrl (
   input [3:0] op,
   input brx,
   output lr_we,
-  output [1:0] pc_sec
+  output [1:0] pc_sec,
+  output is_branch
 );
 
 assign  lr_we = (op == 4'hb) ? 1'b1 : 1'b0; //BR.SUB
@@ -32,7 +34,9 @@ assign  pc_sec = (op == 4'hc) ? 2'b10 : //RETURN
                  ((op == 4'h9) || //BR
                   (op == 4'hb) || //BR.SUB
                   ({op, brx, ZN[1]} == 6'b101001) || //BR.Z
-                  ({op, brx, ZN[0]} == 6'b101011)) ? 2'b01 : 2'b00; //BR.N            
+                  ({op, brx, ZN[0]} == 6'b101011)) ? 2'b01 : 2'b00; //BR.N
+
+assign  is_branch = (lr_we || pc_sec) ? 1'b1 : 1'b0;
 
 endmodule
 
@@ -45,6 +49,7 @@ module ExtOutCntrl (
 
 always @(negedge clk) begin 
   if (op == 4'b0110) begin
+    $display("out put: %h", ra);
     out <= ra;
   end
 end
@@ -100,13 +105,15 @@ endfunction
 
 // Load followed by another instruction
 always @(negedge clk) begin 
-  if ( ins_ahead[7:4] == 4'hd && 
-       (is_read_ra(ins_follow[7:4]) && ins_ahead[3:2] == ins_follow[3:2])) begin
+  if ( ins_ahead[7:4] == 4'hd && (is_read_ra(ins_follow[7:4]) && ins_ahead[3:2] == ins_follow[3:2]) ) begin
         pc_en <= 1'b0; // Bubble inserted, PC stall
+        $display("%h, %h", ins_ahead, ins_follow);
+        $display("1Bubble inserted!");
   end
-  else if (ins_ahead[7:4] == 4'hd && 
-           (is_read_rb(ins_follow[7:4]) && ins_ahead[3:2] == ins_follow[1:0])) begin
+  else if (ins_ahead[7:4] == 4'hd && (is_read_rb(ins_follow[7:4]) && ins_ahead[3:2] == ins_follow[1:0])) begin
         pc_en <= 1'b0; // Bubble inserted, PC stall
+        $display("%h, %h", ins_ahead, ins_follow);
+        $display("2Bubble inserted!");
   end
   else begin
     pc_en <= 1'b1;

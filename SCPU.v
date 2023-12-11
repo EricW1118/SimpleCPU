@@ -1,3 +1,4 @@
+// The original CPU design
 module SCPU (
     input [7:0] ext_in,
     input clk,
@@ -14,7 +15,7 @@ module SCPU (
     assign adder_out_wire = pc_out_wire + 8'h02; // address increment +2
     wire lr_en;
     wire [7:0] lr_out_wire;
-    LR ilocker(.sub_addi(adder_out_wire), .we(lr_en), .sub_addo(lr_out_wire));
+    LR ilocker(.sub_addi(pc_out_wire), .we(lr_en), .sub_addo(lr_out_wire));
 
     // selection signal for pc input
     wire[1:0] pc_mux_sel;
@@ -32,16 +33,17 @@ module SCPU (
     //bubble enable is the opposite of pc enable
     wire bubble_en;
     assign bubble_en = ~pc_en;
+    wire brach_wire;
 
     //IF/ID stage register
-    IF_ID sreg0(.insi(w_ins0), .inso(w_ins1), .rst(rst), .bubble_en(bubble_en), .clk(clk));
+    IF_ID sreg0(.insi(w_ins0), .inso(w_ins1), .rst(rst), .bubble_en(bubble_en), .branch_en(brach_wire), .clk(clk));
 
     //Bubble Cntrl
     BubbleCntrl bbcntrl(.ins_ahead(w_ins1[7:0]), .ins_follow(w_ins0[7:0]), .clk(clk), .pc_en(pc_en));
 
     //Branch control unit
     wire [1:0] zn_wire;
-    BranchCntrl bcntrl(.ZN(zn_wire), .op(w_ins1[7:4]), .brx(w_ins1[3]), .lr_we(lr_en), .pc_sec(pc_mux_sel));
+    BranchCntrl bcntrl(.ZN(zn_wire), .op(w_ins1[7:4]), .brx(w_ins1[3]), .lr_we(lr_en), .pc_sec(pc_mux_sel), .is_branch(brach_wire));
 
     // values of ra and rb between stages
     wire [15:0] vfr0, vfr1, vfr2;

@@ -48,6 +48,7 @@ module IF_ID (
     input clk,
     input rst,
     input bubble_en,
+    input branch_en,
     output reg [15:0] inso
 );
 
@@ -56,6 +57,9 @@ always @(posedge clk or negedge rst) begin
         inso <= 16'h0; // reset value
     end
     else if (bubble_en)begin
+        inso <= 16'h0; // insert bubble
+    end
+    else if (branch_en)begin
         inso <= 16'h0; // insert bubble
     end
     else begin
