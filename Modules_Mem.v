@@ -94,12 +94,10 @@ module DataMemory(
     input [7:0] waddr,
     input we, // Write enable signal
     input clk,
-    input [7:0] din, // Data input (8 bits)
-    output [7:0] dout // Data output (8 bits)
+    input [7:0] din, // Write data input (8 bits)
+    output [7:0] dout // Read data output (8 bits)
 );
-// Data memory should be used after being allocated and initialized, therefore, we do not need initial values.
 reg [7:0] memory[0:255];
-
 integer  i;
 initial begin
     for (i = 0; i < 256; i = i + 1) begin
